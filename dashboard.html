@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | HackGov - Painel de Gestão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <!-- VLibras Widget Element -->
+    <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+            <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div>
+
+    <nav class="bg-blue-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-black tracking-tighter">Hack<span class="text-blue-400">Gov</span></span>
+                    <span class="ml-4 pl-4 border-l border-blue-700 text-xs font-semibold text-blue-300 uppercase tracking-widest hidden sm:block">Painel Interno</span>
+                </div>
+                <div class="flex space-x-4 items-center">
+                    <a href="inicio.html" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-800 transition-colors">Portal do Cidadão</a>
+                    <a href="dashboard.html" class="px-3 py-2 rounded-md text-sm font-medium bg-blue-950 text-blue-300">Dashboard</a>
+                    <button onclick="efetuarLogout()" class="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 text-white transition-colors">Sair / Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Solicitações de Zeladoria</h1>
+                <p class="text-sm text-slate-500 mt-1">Gerencie os chamados enviados pelos cidadãos em tempo real no Oracle.</p>
+            </div>
+            <button onclick="carregarChamados()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-colors">
+                🔄 Atualizar Dados
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Registrado</p>
+                <p id="totalChamados" class="text-4xl font-extrabold text-blue-900 mt-2">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Status: Abertos</p>
+                <p id="totalAbertos" class="text-4xl font-extrabold text-amber-600 mt-2">0</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Última Atualização</p>
+                <p id="horaAtualizacao" class="text-lg font-bold text-slate-700 mt-4">--:--:--</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+                    <thead class="bg-slate-50 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-4">Protocolo</th>
+                            <th class="px-6 py-4">Data Abertura</th>
+                            <th class="px-6 py-4">Tipo</th>
+                            <th class="px-6 py-4">Descrição</th>
+                            <th class="px-6 py-4">Localização (Logradouro)</th>
+                            <th class="px-6 py-4 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela" class="divide-y divide-slate-200 bg-white text-slate-700">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                Carregando dados da API...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        const dicionarioTipos = {
+            1: "⚠️ Buraco na Via",
+            2: "💡 Iluminação Pública",
+            3: "🌳 Poda de Árvore",
+            "1": "⚠️ Buraco na Via",
+            "2": "💡 Iluminação Pública",
+            "3": "🌳 Poda de Árvore"
+        };
+
+        async function carregarChamados() {
+            const token = localStorage.getItem('hackgov_token');
+            
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const corpoTabela = document.getElementById('corpoTabela');
+            const totalChamados = document.getElementById('totalChamados');
+            const totalAbertos = document.getElementById('totalAbertos');
+            const horaAtualizacao = document.getElementById('horaAtualizacao');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/solicitacoes', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                if (!response.ok) throw new Error("Erro na requisição.");
+
+                const dados = await response.json();
+
+                totalChamados.innerText = dados.length;
+                totalAbertos.innerText = dados.filter(c => {
+                    const st = c.statusAtual || c.status || c.status_atual || 'ABERTO';
+                    return st.toUpperCase() === 'ABERTO';
+                }).length;
+                
+                horaAtualizacao.innerText = new Date().toLocaleTimeString('pt-BR');
+                corpoTabela.innerHTML = '';
+
+                if (dados.length === 0) {
+                    corpoTabela.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                Nenhuma solicitação encontrada no banco de dados.
+                            </td>
+                        </tr>`;
+                    return;
+                }
+
+                dados.forEach(chamado => {
+                    const tipoTexto = dicionarioTipos[chamado.tipoOcorrenciaIdTipo] || `Tipo #${chamado.tipoOcorrenciaIdTipo}`;
+                    const statusTexto = chamado.statusAtual !== undefined ? chamado.statusAtual : (chamado.status || chamado.status_atual || "ABERTO");
+
+                    let dataFormatada = chamado.dataAbertura;
+                    if (Array.isArray(chamado.dataAbertura)) {
+                        const [ano, mes, dia] = chamado.dataAbertura;
+                        dataFormatada = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-mono font-bold text-blue-700 whitespace-nowrap">${chamado.protocolo}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${dataFormatada}</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-900">${tipoTexto}</td>
+                        <td class="px-6 py-4 max-w-xs truncate" title="${chamado.descricao}">${chamado.descricao}</td>
+                        <td class="px-6 py-4 font-medium">${chamado.logradouro}</td>
+                        <td class="px-6 py-4 text-center whitespace-nowrap">
+                            <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 uppercase tracking-wide">
+                                ${statusTexto}
+                            </span>
+                        </td>
+                    `;
+                    corpoTabela.appendChild(tr);
+                });
+
+            } catch (error) {
+                console.error("Erro ao buscar chamados:", error);
+                corpoTabela.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-red-500 font-medium">
+                            Não foi possível conectar ao backend Java (Porta 8080). Certifique-se de que a API está rodando.
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        function efetuarLogout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Gerencia a execução das funções de forma organizada
+        window.addEventListener('DOMContentLoaded', () => {
+            // 1. Executa requisição do banco
+            carregarChamados();
+
+            // 2. Carrega o VLibras assincronamente sem travar o escopo acima
+            const scriptLibras = document.createElement('script');
+            scriptLibras.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
+            scriptLibras.async = true;
+            scriptLibras.onload = () => {
+                if (window.VLibras && window.VLibras.Widget) {
+                    new window.VLibras.Widget('https://vlibras.gov.br/app');
+                }
+            };
+            document.body.appendChild(scriptLibras);
+        });
+    </script>
+</body>
+</html>
