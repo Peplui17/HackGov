@@ -43,6 +43,10 @@ public class Solicitacao {
     @Column(name = "tipo_ocorrencia_id_tipo", nullable = false)
     private Long tipoOcorrenciaIdTipo;
 
+    // NOVO CAMPO: Armazena o caminho do arquivo físico da imagem no servidor
+    @Column(name = "caminho_imagem", length = 255)
+    private String caminhoImagem;
+
     // Getters e Setters
     public String getProtocolo() { return protocolo; }
     public void setProtocolo(String protocolo) { this.protocolo = protocolo; }
@@ -78,4 +82,8 @@ public class Solicitacao {
 
     public Integer getIdHistorico() { return idHistorico; }
     public void setIdHistorico(Integer idHistorico) { this.idHistorico = idHistorico; }
+
+    // Getter e Setter do Novo Campo
+    public String getCaminhoImagem() { return caminhoImagem; }
+    public void setCaminhoImagem(String caminhoImagem) { this.caminhoImagem = caminhoImagem; }
 }

@@ -37,13 +37,14 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-slate-900">Solicitações de Zeladoria</h1>
-                <p class="text-sm text-slate-500 mt-1">Gerencie os chamados enviados pelos cidadãos em tempo real no Oracle.</p>
+                <p class="text-sm text-slate-500 mt-1">Gerencie chamados em tempo real e visualize as análises estatísticas e preditivas.</p>
             </div>
-            <button onclick="carregarChamados()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-colors">
+            <button onclick="atualizarTudo()" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition-colors">
                 🔄 Atualizar Dados
             </button>
         </div>
 
+        <!-- Cards de Estatísticas Operacionais -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Registrado</p>
@@ -59,6 +60,39 @@
             </div>
         </div>
 
+        <!-- Seção de Ciência de Dados e IA (Fase 2) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Card de Indicadores Estatísticos -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">📊 Indicadores de SLA (Estatística Clássica)</h3>
+                    <p class="text-xs text-slate-500 mb-4">Cálculo de médias, variância e desvio padrão das ocorrências.</p>
+                </div>
+                <div id="containerEstatisticas" class="text-sm text-slate-700">
+                    <p class="text-slate-400 italic text-xs">Carregando indicadores do Python...</p>
+                </div>
+            </div>
+            
+            <!-- Card do Histograma de Frequência -->
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center">
+                <h3 class="text-lg font-bold text-slate-800 mb-2 self-start">📈 Histograma de Frequência de Prazos</h3>
+                <div class="w-full flex items-center justify-center min-h-[180px]">
+                    <img id="graficoSla" src="" alt="Histograma de Prazos" class="max-w-full h-auto rounded shadow-sm" style="display: none;" />
+                    <p id="loadingGrafico" class="text-xs text-slate-400">Carregando gráfico analítico...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de Predição de Demandas (Fase 3 - Machine Learning) -->
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-8">
+            <h3 class="text-lg font-bold text-slate-800 mb-1">🤖 Predição de Volume de Demandas (Machine Learning)</h3>
+            <p class="text-xs text-slate-500 mb-4">Projeção do volume de chamados futuros por bairro com base no histórico e sazonalidade.</p>
+            <div id="containerPredicao" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <p class="text-slate-400 italic text-xs">Carregando modelos preditivos do Scikit-Learn...</p>
+            </div>
+        </div>
+
+        <!-- Tabela de Chamados -->
         <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
@@ -69,7 +103,7 @@
                             <th class="px-6 py-4">Tipo</th>
                             <th class="px-6 py-4">Descrição</th>
                             <th class="px-6 py-4">Localização (Logradouro)</th>
-                            <th class="px-6 py-4 text-center">Status</th>
+                            <th class="px-6 py-4 text-center">Status / Ações</th>
                         </tr>
                     </thead>
                     <tbody id="corpoTabela" class="divide-y divide-slate-200 bg-white text-slate-700">
@@ -163,9 +197,20 @@
                         <td class="px-6 py-4 max-w-xs truncate" title="${chamado.descricao}">${chamado.descricao}</td>
                         <td class="px-6 py-4 font-medium">${chamado.logradouro}</td>
                         <td class="px-6 py-4 text-center whitespace-nowrap">
-                            <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 uppercase tracking-wide">
-                                ${statusTexto}
-                            </span>
+                            <div class="flex items-center justify-center gap-2">
+                                <select onchange="alterarStatus('${chamado.protocolo}', this.value)" 
+                                        class="bg-amber-50 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full cursor-pointer outline-none border border-amber-200 shadow-sm hover:bg-amber-100 transition-colors">
+                                    <option value="">${statusTexto} (Mudar...)</option>
+                                    <option value="Em Análise">Em Análise</option>
+                                    <option value="Em Andamento">Em Andamento</option>
+                                    <option value="Concluído">Concluído</option>
+                                </select>
+                                <button onclick="desfazerUltimoStatus('${chamado.protocolo}')" 
+                                        title="Desfazer última mudança (LIFO)"
+                                        class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                </button>
+                            </div>
                         </td>
                     `;
                     corpoTabela.appendChild(tr);
@@ -182,17 +227,131 @@
             }
         }
 
+        // Funções para manipulação de Status (Pilha LIFO via API Java)
+        async function alterarStatus(protocolo, novoStatus) {
+            if (!novoStatus) return;
+            
+            try {
+                const response = await fetch(`http://localhost:8080/api/solicitacoes/${protocolo}/status?novoStatus=${novoStatus}`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const mensagem = await response.text();
+                    alert(mensagem);
+                    carregarChamados(); // Atualiza a tabela dinamicamente
+                } else {
+                    alert("Falha ao atualizar o status no servidor.");
+                }
+            } catch (erro) {
+                console.error(erro);
+                alert("Erro de conexão ao tentar atualizar o status.");
+            }
+        }
+
+        async function desfazerUltimoStatus(protocolo) {
+            try {
+                const response = await fetch(`http://localhost:8080/api/solicitacoes/${protocolo}/status/desfazer`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const mensagem = await response.text();
+                    alert(mensagem);
+                    carregarChamados(); 
+                } else {
+                    alert("Não foi possível desfazer a ação.");
+                }
+            } catch (erro) {
+                console.error(erro);
+                alert("Erro de conexão ao tentar desfazer a ação.");
+            }
+        }
+
+        // Função para consumir a API Python (Porta 8000) - Análise e Estatísticas (Fase 2)
+        async function carregarAnalisePython() {
+            const containerStats = document.getElementById('containerEstatisticas');
+            const imgElement = document.getElementById('graficoSla');
+            const loadingElement = document.getElementById('loadingGrafico');
+
+            try {
+                const resStats = await fetch('http://localhost:8000/estatisticas-sla');
+                const dataStats = await resStats.json();
+                
+                if (dataStats.indicadores_servico) {
+                    const stats = dataStats.indicadores_servico;
+                    let htmlList = '<ul class="space-y-2 text-xs divide-y divide-slate-100">';
+                    
+                    for (const [idTipo, valores] of Object.entries(stats)) {
+                        const nomeTipo = dicionarioTipos[idTipo] || `Ocorrência #${idTipo}`;
+                        htmlList += `
+                            <li class="pt-2 flex justify-between items-center">
+                                <span class="font-semibold text-slate-800">${nomeTipo}</span>
+                                <span class="text-slate-600">Média: <b class="text-blue-900">${valores.media_dias} dias</b> | Desv. Padrão: <b>${valores.desvio_padrao}</b></span>
+                            </li>
+                        `;
+                    }
+                    htmlList += '</ul>';
+                    containerStats.innerHTML = htmlList;
+                }
+
+                const resImg = await fetch('http://localhost:8000/grafico-histograma');
+                const dataImg = await resImg.json();
+                
+                if (dataImg.imagem_base64) {
+                    imgElement.src = `data:image/png;base64,${dataImg.imagem_base64}`;
+                    imgElement.style.display = 'block';
+                    loadingElement.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Erro ao conectar no serviço Python:", error);
+                containerStats.innerHTML = '<p class="text-red-500 text-xs">Microsserviço de IA (Porta 8000) indisponível.</p>';
+                loadingElement.innerText = 'Erro ao carregar gráfico analítico.';
+            }
+        }
+
+        async function carregarPredicoesPython() {
+            const containerPredicao = document.getElementById('containerPredicao');
+
+            try {
+                const response = await fetch('http://localhost:8000/predicao-demandas');
+                const data = await response.json();
+
+                if (data.predicao_bairros) {
+                    const predicoes = data.predicao_bairros;
+                    let htmlCards = '';
+
+                    for (const [bairro, volumePrevisto] of Object.entries(predicoes)) {
+                        htmlCards += `
+                            <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col justify-between">
+                                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bairro: ${bairro}</span>
+                                <span class="text-2xl font-black text-blue-900 mt-2">${volumePrevisto} <span class="text-xs font-normal text-slate-600">chamados previstos</span></span>
+                            </div>
+                        `;
+                    }
+
+                    containerPredicao.innerHTML = htmlCards || '<p class="text-slate-400 text-xs">Nenhuma predição gerada.</p>';
+                }
+            } catch (error) {
+                console.error("Erro ao carregar predições de ML:", error);
+                containerPredicao.innerHTML = '<p class="text-red-500 text-xs">Falha ao conectar com o modelo preditivo de IA.</p>';
+            }
+        }
+
+        function atualizarTudo() {
+            carregarChamados();
+            carregarAnalisePython();
+            carregarPredicoesPython();
+        }
+
         function efetuarLogout() {
             localStorage.clear();
             window.location.href = 'login.html';
         }
 
-        // Gerencia a execução das funções de forma organizada
         window.addEventListener('DOMContentLoaded', () => {
-            // 1. Executa requisição do banco
-            carregarChamados();
+            atualizarTudo();
 
-            // 2. Carrega o VLibras assincronamente sem travar o escopo acima
             const scriptLibras = document.createElement('script');
             scriptLibras.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
             scriptLibras.async = true;
