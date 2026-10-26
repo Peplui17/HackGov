@@ -227,6 +227,7 @@
             }
         }
 
+<<<<<<< HEAD
         // Funções para manipulação de Status (Pilha LIFO via API Java)
         async function alterarStatus(protocolo, novoStatus) {
             if (!novoStatus) return;
@@ -268,6 +269,8 @@
             }
         }
 
+=======
+>>>>>>> 556eb16432102df07111497493ee80c6ed890d59
         // Função para consumir a API Python (Porta 8000) - Análise e Estatísticas (Fase 2)
         async function carregarAnalisePython() {
             const containerStats = document.getElementById('containerEstatisticas');
@@ -275,6 +278,10 @@
             const loadingElement = document.getElementById('loadingGrafico');
 
             try {
+<<<<<<< HEAD
+=======
+                // 1. Busca Indicadores Estatísticos (SLA)
+>>>>>>> 556eb16432102df07111497493ee80c6ed890d59
                 const resStats = await fetch('http://localhost:8000/estatisticas-sla');
                 const dataStats = await resStats.json();
                 
@@ -295,6 +302,10 @@
                     containerStats.innerHTML = htmlList;
                 }
 
+<<<<<<< HEAD
+=======
+                // 2. Busca Imagem do Histograma (Base64)
+>>>>>>> 556eb16432102df07111497493ee80c6ed890d59
                 const resImg = await fetch('http://localhost:8000/grafico-histograma');
                 const dataImg = await resImg.json();
                 
@@ -352,6 +363,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             atualizarTudo();
 
+<<<<<<< HEAD
+=======
+            // Carrega o VLibras assincronamente
+>>>>>>> 556eb16432102df07111497493ee80c6ed890d59
             const scriptLibras = document.createElement('script');
             scriptLibras.src = "https://vlibras.gov.br/app/vlibras-plugin.js";
             scriptLibras.async = true;
